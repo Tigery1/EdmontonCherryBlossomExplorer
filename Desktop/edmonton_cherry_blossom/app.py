@@ -167,63 +167,32 @@ def load_data():
 @st.cache_data(show_spinner=False, ttl=300)
 def get_suggestions(query):
     try:
-        import re
-        base_headers = {"User-Agent": "EdmontonCherryBlossomApp/1.0 contact:mike_baran@shaw.ca"}
-
-        if re.match(r'^\d+', query.strip()):
-            # House-number query → structured search (more precise)
-            params = {
-                "street": query.strip(),
-                "city": "Edmonton",
-                "state": "Alberta",
-                "country": "Canada",
-                "format": "json",
-                "limit": 4,
-                "addressdetails": 1,
-            }
-        else:
-            # Neighbourhood / street-name query → freeform search
-            params = {
-                "q": f"{query}, Edmonton, Alberta",
-                "format": "json",
-                "limit": 4,
-                "countrycodes": "ca",
-                "bounded": 1,
-                "viewbox": "-113.72,53.35,-113.27,53.72",
-                "addressdetails": 1,
-            }
-
+        params = {
+            "singleLine": f"{query}, Edmonton, Alberta",
+            "outFields": "Match_addr,StAddr,Nbrhd",
+            "searchExtent": "-113.72,53.35,-113.27,53.72",
+            "f": "json",
+            "maxLocations": 4,
+            "countryCode": "CAN",
+        }
         resp = requests.get(
-            "https://nominatim.openstreetmap.org/search",
+            "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates",
             params=params,
-            headers=base_headers,
             timeout=5
         )
         results = []
-        for item in resp.json():
-            lat, lon = float(item["lat"]), float(item["lon"])
-            addr = item.get("address", {})
-            num  = addr.get("house_number", "")
-            road = addr.get("road", "")
-            hood = addr.get("suburb") or addr.get("neighbourhood") or addr.get("quarter") or ""
-            if num and road:
-                street = f"{num} {road}"
-            elif road:
-                # house_number missing from structured data — pull from display_name
-                first = item.get("display_name", "").split(",")[0].strip()
-                street = first if first[0].isdigit() else road
-            else:
-                street = item.get("display_name", "").split(",")[0].strip()
-            label = f"{street}  ·  {hood}" if hood else street
-            if label:
+        for c in resp.json().get("candidates", []):
+            loc = c.get("location", {})
+            lat, lon = loc.get("y"), loc.get("x")
+            attrs = c.get("attributes", {})
+            addr = attrs.get("Match_addr", "").split(",")[0].strip()
+            hood = attrs.get("Nbrhd", "").strip()
+            if lat and lon and addr:
+                label = f"{addr}  ·  {hood}" if hood else addr
                 results.append({"label": label, "lat": lat, "lon": lon})
         return results
     except Exception as e:
-        try:
-            snippet = resp.text[:120]
-        except Exception:
-            snippet = "no response"
-        return [{"label": f"⚠ {resp.status_code} – {snippet}", "lat": 53.5447, "lon": -113.4901}]
+        return [{"label": f"⚠ Search error: {e}", "lat": 53.5447, "lon": -113.4901}]
 
 
 df = load_data()
