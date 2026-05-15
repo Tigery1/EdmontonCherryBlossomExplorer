@@ -4,7 +4,6 @@ import json
 import plotly.graph_objects as go
 import os
 import requests
-from st_keyup import st_keyup
 
 st.set_page_config(layout="wide", page_title="Edmonton Cherry Blossom Navigator", page_icon="🌸")
 
@@ -34,7 +33,7 @@ st.markdown('''
     }
     div[data-testid="column"] > div { gap: 0 !important; }
     /* Pull search row up under the subtitle */
-    [data-testid="stVerticalBlock"] > div:has([data-testid="stCustomComponentV1"]) {
+    [data-testid="stVerticalBlock"] > div:has([data-testid="stTextInput"]) {
         margin-top: -1.2rem !important;
     }
     .main-title {
@@ -57,12 +56,6 @@ st.markdown('''
         text-align: center;
     }
     /* Search input */
-    /* Collapse keyup iframe wrapper */
-    [data-testid="stCustomComponentV1"] {
-        min-height: 0 !important;
-        margin-top: -0.5rem !important;
-        margin-bottom: -0.75rem !important;
-    }
     [data-testid="stTextInput"] input {
         background: #fff !important;
         border: 1.5px solid #f48fb1 !important;
@@ -251,7 +244,7 @@ with search_col:
     if "last_addr" not in st.session_state:
         st.session_state.last_addr = ""
 
-    address_input = st_keyup("", placeholder="🔍  Type a street, neighbourhood or postal code…", debounce=400)
+    address_input = st.text_input("", placeholder="🔍  Type a street, neighbourhood or postal code…", label_visibility="collapsed")
 
     if address_input != st.session_state.last_addr:
         st.session_state.addr_selected = False
