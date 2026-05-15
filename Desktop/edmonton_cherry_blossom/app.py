@@ -219,7 +219,11 @@ def get_suggestions(query):
                 results.append({"label": label, "lat": lat, "lon": lon})
         return results
     except Exception as e:
-        return [{"label": f"⚠ Search error: {e}", "lat": 53.5447, "lon": -113.4901}]
+        try:
+            snippet = resp.text[:120]
+        except Exception:
+            snippet = "no response"
+        return [{"label": f"⚠ {resp.status_code} – {snippet}", "lat": 53.5447, "lon": -113.4901}]
 
 
 df = load_data()
