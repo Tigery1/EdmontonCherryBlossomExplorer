@@ -218,8 +218,8 @@ def get_suggestions(query):
             if label:
                 results.append({"label": label, "lat": lat, "lon": lon})
         return results
-    except Exception:
-        return []
+    except Exception as e:
+        return [{"label": f"⚠ Search error: {e}", "lat": 53.5447, "lon": -113.4901}]
 
 
 df = load_data()
